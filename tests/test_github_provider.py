@@ -46,9 +46,7 @@ class TestGitHubClientInitialization:
         client = GitHubClient(token="test_token_123")
 
         assert client.session.headers["Authorization"] == "Bearer test_token_123"
-        assert (
-            client.session.headers["Accept"] == "application/vnd.github+json"
-        )
+        assert client.session.headers["Accept"] == "application/vnd.github+json"
         assert client.session.headers["X-GitHub-Api-Version"] == "2022-11-28"
 
 
