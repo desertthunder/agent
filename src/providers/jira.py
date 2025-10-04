@@ -12,23 +12,7 @@ from loguru import logger
 
 from settings import JIRA_API_TOKEN, JIRA_BASE_URL, JIRA_EMAIL
 
-
-class JiraAuthError(Exception):
-    """Raised when JIRA authentication fails."""
-
-    pass
-
-
-class JiraConnError(Exception):
-    """Raised when connection to JIRA fails."""
-
-    pass
-
-
-class JiraUserNotFoundError(Exception):
-    """Raised when a user is not found in JIRA."""
-
-    pass
+from .exceptions import JiraAuthError, JiraConnError
 
 
 class JiraClient:
