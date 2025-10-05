@@ -77,9 +77,10 @@ class TestStatusEndpoint:
 class TestQueryEndpoint:
     """Tests for query processing endpoint."""
 
+    @patch("src.api.app.response_generator")
     @patch("src.api.app.data_aggregator")
     @patch("src.api.app.query_parser")
-    def test_query_success(self, mock_parser, mock_aggregator, client):
+    def test_query_success(self, mock_parser, mock_aggregator, mock_generator, client):
         """Should successfully process a valid query."""
         mock_parser.parse.return_value = {
             "username": "John",
@@ -96,6 +97,9 @@ class TestQueryEndpoint:
             "errors": [],
         }
         mock_aggregator.format_summary.return_value = "Activity summary for John..."
+        mock_generator.generate_response.return_value = (
+            "John has been working on PROJ-1..."
+        )
 
         response = client.post("/api/query", json={"query": "What is John working on?"})
 
@@ -105,6 +109,7 @@ class TestQueryEndpoint:
         assert data["parsed"]["username"] == "John"
         assert "summary" in data
         assert "activity" in data
+        assert "ai_response" in data
 
     def test_query_missing_query_field(self, client):
         """Should return 400 when query field is missing."""

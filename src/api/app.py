@@ -8,15 +8,16 @@ from loguru import logger
 
 from providers.github import GitHubAuthError, GitHubClient, GitHubConnError
 from providers.jira import JiraAuthError, JiraClient, JiraConnError
+from providers.openai import ResponseGenerator
 from services.data_aggregator import DataAggregator
 from services.query_parser import QueryParser
 
 app = Flask(__name__)
 
 
-# Initialize services
 query_parser = QueryParser()
 data_aggregator = DataAggregator()
+response_generator = ResponseGenerator()
 
 
 @app.route("/api/health", methods=["GET"])
@@ -81,10 +82,7 @@ def query_activity():
         JSON response with activity data and formatted summary
     """
     if not request.json or "query" not in request.json:
-        return (
-            jsonify({"error": "Missing 'query' field in request body"}),
-            400,
-        )
+        return (jsonify({"error": "Missing 'query' field in request body"}), 400)
 
     query_text = request.json["query"]
     days = request.json.get("days", 7)
@@ -112,15 +110,12 @@ def query_activity():
                 400,
             )
 
-        # Fetch activity data
         activity_data = data_aggregator.get_user_activity(
-            username=parsed["username"],
-            query_type=parsed["query_type"],
-            days=days,
+            username=parsed["username"], query_type=parsed["query_type"], days=days
         )
 
-        # Format summary
         summary = data_aggregator.format_summary(activity_data)
+        ai_response = response_generator.generate_response(activity_data, days=days)
 
         response = {
             "query": query_text,
@@ -130,6 +125,7 @@ def query_activity():
             },
             "activity": activity_data,
             "summary": summary,
+            "ai_response": ai_response,
         }
 
         logger.info(f"Successfully processed query for {parsed['username']}")
@@ -137,15 +133,7 @@ def query_activity():
 
     except Exception as e:
         logger.error(f"Error processing query: {e}", exc_info=True)
-        return (
-            jsonify(
-                {
-                    "error": "Internal server error",
-                    "message": str(e),
-                }
-            ),
-            500,
-        )
+        return (jsonify({"error": "Internal server error", "message": str(e)}), 500)
 
 
 @app.errorhandler(404)
@@ -160,10 +148,7 @@ def not_found(error):
     """
     return (
         jsonify(
-            {
-                "error": "Not found",
-                "message": "The requested endpoint does not exist",
-            }
+            {"error": "Not found", "message": "The requested endpoint does not exist"}
         ),
         404,
     )
