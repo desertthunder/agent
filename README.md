@@ -56,8 +56,8 @@ It combines data from both platforms and presents it in a conversational, easy-t
 Clone the repository
 
 ```bash
-git clone <repository-url>
-cd autonomize-project
+git clone https://github.com/desertthunder/agent
+cd agent
 ```
 
 Setup poetry & virtual environment
@@ -207,9 +207,9 @@ Response format:
   },
   "activity": {
     "username": "John",
-    "jira_issues": [...],
-    "github_commits": [...],
-    "github_prs": [...],
+    "jira_issues": "[...]",
+    "github_commits": "[...]",
+    "github_prs": "[...]",
     "has_activity": true,
     "errors": []
   },
