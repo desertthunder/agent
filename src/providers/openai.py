@@ -122,7 +122,6 @@ class ResponseGenerator:
 
         count = len(commits)
 
-        # Group commits by repository
         repos = {}
         for commit in commits:
             repo = commit.get("repository", "unknown")
@@ -264,11 +263,9 @@ class ResponseGenerator:
             logger.info(f"Generated no-activity response for {username}")
             return response
 
-        # Start with greeting
         greeting = random.choice(self.greeting_templates).format(username=username)
         sections = [greeting, ""]
 
-        # Add activity sections
         jira_section = self._format_jira_section(activity_data.get("jira_issues", []))
         if jira_section:
             sections.append(jira_section)
@@ -289,12 +286,10 @@ class ResponseGenerator:
                 sections.append("")
             sections.append(prs_section)
 
-        # Add summary
         summary = self._generate_summary_statement(activity_data)
         if summary:
             sections.append(summary)
 
-        # Add errors if any
         if activity_data.get("errors"):
             sections.append("\n\nNote: Some data may be incomplete due to errors:")
             sections.extend(f'  " {error}' for error in activity_data["errors"])

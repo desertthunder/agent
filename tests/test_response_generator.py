@@ -41,7 +41,7 @@ class TestResponseGeneratorNoActivity:
         response = generator.generate_response(activity_data, days=7)
 
         assert "testuser" in response
-        assert response  # Should not be empty
+        assert response
 
     def test_generate_response_no_activity_includes_errors(self, generator):
         """Should include errors in no-activity response."""
@@ -326,7 +326,7 @@ class TestResponseGeneratorFormatting:
             "github_prs": [{"number": 1}],
         }
         result = generator._generate_summary_statement(activity_data)
-        assert result  # Should have content
+        assert result
 
 
 class TestResponseGeneratorEdgeCases:
@@ -355,7 +355,7 @@ class TestResponseGeneratorEdgeCases:
 
     def test_generate_response_handles_long_commit_messages(self, generator):
         """Should truncate very long commit messages."""
-        long_message = "A" * 200  # Very long message
+        long_message = "A" * 200
         activity_data = {
             "username": "testuser",
             "jira_issues": [],
@@ -369,7 +369,6 @@ class TestResponseGeneratorEdgeCases:
 
         response = generator.generate_response(activity_data)
 
-        # Response should be generated without error
         assert "testuser" in response
         assert "org/repo" in response
 
@@ -401,5 +400,4 @@ class TestResponseGeneratorEdgeCases:
         response = generator.generate_response(activity_data)
 
         assert "testuser" in response
-        # Should indicate there are more items
         assert "more" in response.lower() or "PROJ-" in response

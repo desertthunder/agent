@@ -76,6 +76,8 @@ src/
     └── data_aggregator.py    # Data combination and integration logic
 ```
 
+---
+
 The goal here was to produce a clear separation of concerns:
     - Providers handle APIs
     - Services encapsulate business logic
@@ -113,6 +115,8 @@ tests/
 ├── test_response_generator.py
 └── test_data_aggregator.py
 ```
+
+---
 
 **Coverage:**
 135 total tests  ·  100 % pass rate  ·  ~0.35 s runtime

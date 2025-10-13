@@ -43,7 +43,7 @@ def cli(ctx, debug):
         logger.add(sys.stderr, level="DEBUG")
     else:
         logger.remove()
-        logger.add(sys.stderr, level="ERROR")
+        logger.add(sys.stderr, level="INFO")
 
     if ctx.invoked_subcommand is None:
         click.echo(ctx.get_help())
@@ -275,7 +275,9 @@ def status():
 
 @cli.command()
 @click.option("--host", default="0.0.0.0", help="Host to bind to (default: 0.0.0.0)")
-@click.option("--port", "-p", default=5000, type=int, help="Port to bind to (default: 5000)")
+@click.option(
+    "--port", "-p", default=5000, type=int, help="Port to bind to (default: 5000)"
+)
 @click.option("--no-debug", is_flag=True, help="Disable debug mode")
 def serve(host, port, no_debug):
     """Start the Flask API server.

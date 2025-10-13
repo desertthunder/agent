@@ -94,7 +94,6 @@ def query_activity():
         return jsonify({"error": "Days must be an integer between 1 and 365"}), 400
 
     try:
-        # Parse the query
         logger.info(f"Processing query: {query_text}")
         parsed = query_parser.parse(query_text)
 

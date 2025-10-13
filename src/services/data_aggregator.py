@@ -41,17 +41,46 @@ class DataAggregator:
         """Fetch JIRA issues for user and update result dictionary.
 
         Args:
-            username: Username to search for
+            username: Display name or email to search for
             result: Result dictionary to update with issues and errors
         """
         try:
-            logger.info(f"Fetching JIRA issues for {username}")
-            result["jira_issues"] = self.jira_client.get_user_issues(username)
-            if result["jira_issues"]:
-                result["has_activity"] = True
-        except JiraConnError as e:
-            logger.error(f"Error fetching JIRA data for {username}: {e}")
-            result["errors"].append(f"JIRA: {e!s}")
+            logger.info(f"Resolving JIRA user for {username}")
+            user_info = None
+            try:
+                if hasattr(self.jira_client, "find_user"):
+                    user_info = self.jira_client.find_user(username)
+            except Exception as e:
+                logger.error(f"Unexpected error resolving JIRA user: {e}")
+                result["errors"].append(f"JIRA: Unexpected error - {e!s}")
+                result["jira_issues"] = []
+                return
+
+            if not user_info:
+                logger.warning(f"No JIRA user found for '{username}'")
+                result["errors"].append(f"JIRA: User '{username}' not found")
+                result["jira_issues"] = []
+                return
+
+            account_id = user_info.get("accountId", username)
+            display_name = user_info.get("displayName", username)
+            logger.info(f"Fetching JIRA issues for {display_name} ({account_id})")
+
+            try:
+                issues = self.jira_client.get_user_issues(account_id)
+                result["jira_issues"] = list(issues or [])
+                if result["jira_issues"]:
+                    result["has_activity"] = True
+            except JiraConnError as e:
+                logger.error(f"Error fetching JIRA data for {username}: {e}")
+                result["errors"].append(f"JIRA: {e!s}")
+                if "410" in str(e):
+                    result["errors"].append(
+                        f"JIRA: User '{username}' has no Jira product access (license required)"
+                    )
+            except Exception as e:
+                logger.error(f"Unexpected error fetching JIRA issues: {e}")
+                result["errors"].append(f"JIRA: Unexpected error - {e!s}")
         except Exception as e:
             logger.error(f"Unexpected error fetching JIRA data: {e}")
             result["errors"].append(f"JIRA: Unexpected error - {e!s}")

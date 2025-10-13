@@ -99,7 +99,7 @@ class JiraClient:
             JiraConnectionError: If connection fails
             JiraAuthenticationError: If authentication fails
         """
-        url = f"{self.base_url}/rest/api/2/myself"
+        url = f"{self.base_url}/rest/api/3/myself"
 
         try:
             logger.debug(f"Testing connection to {url}")
@@ -138,7 +138,7 @@ class JiraClient:
             raise JiraConnError(f"HTTP error: {e}") from e
 
     def get_user_issues(
-        self, username: str, max_results: int = 50
+        self, account_id: str, max_results: int = 50
     ) -> list[dict[str, Any]]:
         """Fetch issues assigned to a specific user.
 
@@ -146,7 +146,7 @@ class JiraClient:
         ordered by most recently updated.
 
         Args:
-            username: JIRA username or email to search for
+            account_id: JIRA account ID
             max_results: Maximum number of issues to return (default: 50)
 
         Returns:
@@ -156,8 +156,8 @@ class JiraClient:
             JiraConnectionError: If API request fails
             JiraUserNotFoundError: If user has no issues (may not exist)
         """
-        url = f"{self.base_url}/rest/api/2/search"
-        jql = f'assignee = "{username}" ORDER BY updated DESC'
+        url = f"{self.base_url}/rest/api/3/search"
+        jql = f'assignee = "{account_id}" ORDER BY updated DESC'
 
         params = {
             "jql": jql,
@@ -166,7 +166,7 @@ class JiraClient:
         }
 
         try:
-            logger.debug(f"Fetching issues for user: {username}")
+            logger.debug(f"Fetching issues for user: {account_id}")
             response = self.session.get(url, params=params, timeout=10)
             response.raise_for_status()
 
@@ -174,7 +174,7 @@ class JiraClient:
             issues = data.get("issues", [])
 
             if not issues:
-                logger.warning(f"No issues found for user: {username}")
+                logger.warning(f"No issues found for user: {account_id}")
                 return []
 
             parsed_issues = []
@@ -193,10 +193,10 @@ class JiraClient:
                     }
                 )
 
-            logger.info(f"Found {len(parsed_issues)} issues for {username}")
+            logger.info(f"Found {len(parsed_issues)} issues for {account_id}")
 
         except requests.exceptions.Timeout as e:
-            logger.error(f"Request timed out while fetching issues for {username}")
+            logger.error(f"Request timed out while fetching issues for {account_id}")
             raise JiraConnError("Request timed out") from e
         except requests.exceptions.HTTPError as e:
             logger.error(f"HTTP error fetching issues: {e}")
@@ -222,7 +222,7 @@ class JiraClient:
         Raises:
             JiraConnectionError: If API request fails
         """
-        url = f"{self.base_url}/rest/api/2/issue/{issue_key}"
+        url = f"{self.base_url}/rest/api/3/issue/{issue_key}"
         params = {"expand": "changelog"}
 
         try:
@@ -266,3 +266,29 @@ class JiraClient:
             raise JiraConnError(f"Request failed: {e}") from e
         else:
             return issue_details
+
+    def find_user(self, query: str) -> dict[str, Any] | None:
+        """Search for a Jira user by name or email."""
+        url = f"{self.base_url}/rest/api/3/user/search"
+        params = {"query": query}
+
+        try:
+            logger.info(f"Searching for JIRA user matching: {query}")
+            response = self.session.get(url, params=params, timeout=10)
+            response.raise_for_status()
+            users = response.json()
+
+            if not users:
+                logger.warning(f"No JIRA user found for query: {query}")
+                return None
+
+            user = users[0]
+            return {
+                "accountId": user.get("accountId"),
+                "displayName": user.get("displayName"),
+                "emailAddress": user.get("emailAddress"),
+            }
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Failed to lookup JIRA user: {e}")
+            raise JiraConnError(f"User lookup failed: {e}") from e
